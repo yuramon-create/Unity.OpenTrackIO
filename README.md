@@ -6,7 +6,7 @@
 
 Unity.OpenTrackIO is an experimental Unity plugin skeleton for receiving OpenTrackIO data over UDP and mapping it to Unity camera and transform values.
 
-<video src="Unity.OpenTrackIO.mp4" controls width="100%"></video>
+<video src="Unity.OpenTrackIO.mp4" controls muted autoplay loop style="max-width:100%;"></video>
 
 ## Overview
 
