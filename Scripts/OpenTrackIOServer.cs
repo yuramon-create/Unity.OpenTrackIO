@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace OpenTrackIO
 {
-    public class OpenTrackIOServer
+    public class OpenTrackIOServer : MonoBehaviour
     {
         private static readonly Dictionary<int, OpenTrackIOServer> servers = new Dictionary<int, OpenTrackIOServer>();
 

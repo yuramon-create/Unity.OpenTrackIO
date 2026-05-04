@@ -176,7 +176,7 @@ namespace OpenTrackIO
             public string value;
         }
 
-        private class OpenTrackIOHeader
+        internal class OpenTrackIOHeader
         {
             public string identifier;
             public byte reserved;
@@ -195,10 +195,14 @@ namespace OpenTrackIO
                 throw new ArgumentException("OpenTrackIO packet is empty.");
             }
 
+#if UNITY_EDITOR || DEBUG
+            Debug.Log($"Received raw data ({data.Length} bytes): {BitConverter.ToString(data)}");
+#endif
+
             var header = ParseHeader(data);
             string json;
 
-            if (header != null && header.identifier == "OTIO")
+            if (header != null && header.identifier == "OTrk")
             {
                 if (header.encoding != 0x01)
                 {
@@ -222,16 +226,23 @@ namespace OpenTrackIO
                 throw new Exception("Failed to extract JSON payload from OpenTrackIO packet.");
             }
 
-            var packet = JsonUtility.FromJson<Packet>(json);
-            if (packet == null)
+            try
             {
-                throw new Exception("Failed to parse OpenTrackIO JSON payload.");
+                var packet = JsonUtility.FromJson<Packet>(json);
+                if (packet == null)
+                {
+                    throw new Exception("Failed to parse OpenTrackIO JSON payload.");
+                }
+                return packet;
             }
-
-            return packet;
+            catch (ArgumentException e)
+            {
+                Debug.LogError($"JSON parse error: {e.Message}. JSON: {json}");
+                throw;
+            }
         }
 
-        private static OpenTrackIOHeader ParseHeader(byte[] data)
+        internal static OpenTrackIOHeader ParseHeader(byte[] data)
         {
             if (data.Length < 16)
             {
@@ -258,21 +269,22 @@ namespace OpenTrackIO
         private static string ExtractJsonPayload(byte[] data, OpenTrackIOHeader header)
         {
             string json;
-            if (header != null && header.identifier == "OTIO")
+            if (header != null && header.identifier == "OTrk")
             {
                 json = Encoding.UTF8.GetString(data, 16, header.payloadLength);
 #if UNITY_EDITOR || DEBUG
-                Debug.Log($"OpenTrackIO header detected. Extracted JSON payload ({header.payloadLength} bytes): {json}");
+                Debug.Log($"OpenTrackIO header detected. Identifier={header.identifier}, payload length={header.payloadLength}. Extracted JSON payload: {json}");
 #endif
             }
             else
             {
                 json = Encoding.UTF8.GetString(data);
 #if UNITY_EDITOR || DEBUG
-                Debug.Log($"No OpenTrackIO header detected. Treating full packet as JSON: {json}");
+                Debug.Log($"No OpenTrackIO header detected. Treating full packet as JSON-like payload. Header identifier: {header?.identifier ?? "<none>"}");
+                Debug.Log($"Raw payload prefix: {BitConverter.ToString(data, 0, Math.Min(data.Length, 32))}");
 #endif
             }
-            return json;
+            return json.Trim();
         }
     }
 }
