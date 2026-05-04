@@ -56,11 +56,11 @@ Unity.OpenTrackIO is an experimental Unity plugin skeleton for receiving OpenTra
 
 ## Usage
 
-1. Add the plugin scripts to your Unity project.
-2. Attach `OpenTrackIOLink` to a Camera GameObject.
-3. Enable `runInEditMode` if you want the server to run in the editor.
-4. Set the `sourceNumber` value to match the OpenTrackIO source.
-5. Start sending OpenTrackIO packets to UDP port `40000`.
+1. Create a folder named Plugins under the Assets directory and copy `OpenTrackIOLink.cs`, `OpenTrackIOPacket.cs`, and `OpenTrackIOServer.cs` into it.
+2. Create an Empty Object in the Hierarchy and name it `OpenTrackIO` (or any name you prefer).
+3. Attach the scripts: Add both `OpenTrackIOServer` and `OpenTrackIOLink` to the object created in the previous step.
+4. Start sending OpenTrackIO packets to UDP port 40000.
+5. The OpenTrackIO node will now begin receiving and processing the data.
 
 ## Disclaimer
 
