@@ -39,18 +39,21 @@ namespace OpenTrackIO
             if (packet.transforms != null && packet.transforms.Length > 0)
             {
                 var transformData = packet.transforms[0];
-                // OpenTrackIO uses right-handed coordinate system, Unity uses left-handed
-                // X: right, Y: up, Z: forward in both, but Unity Z is into screen, so negate Z
+                // OpenTrackIO uses right-handed coordinates; Unity uses left-handed.
                 transform.localPosition = new Vector3(
                     transformData.translation.x,
                     transformData.translation.y,
                     -transformData.translation.z
                 );
-                transform.localRotation = Quaternion.Euler(
-                    -transformData.rotation.tilt,
-                    transformData.rotation.pan + 90f,
-                    -transformData.rotation.roll
-                );
+
+                var sourceRotation =
+                    Quaternion.AngleAxis(transformData.rotation.pan, Vector3.up) *
+                    Quaternion.AngleAxis(-transformData.rotation.tilt, Vector3.right) *
+                    Quaternion.AngleAxis(-transformData.rotation.roll, Vector3.forward);
+
+                // Apply a 90-degree yaw offset to match the Unity camera orientation.
+                var convert = Quaternion.Euler(0f, 90f, 0f);
+                transform.localRotation = convert * sourceRotation;
             }
 
             var camera = GetComponent<Camera>();
