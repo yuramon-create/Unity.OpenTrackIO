@@ -6,6 +6,8 @@
 
 Unity.OpenTrackIO is an experimental Unity plugin skeleton for receiving OpenTrackIO data over UDP and mapping it to Unity camera and transform values.
 
+<video src="Unity.OpenTrackIO.mp4" controls width="100%"></video>
+
 ## Overview
 
 - Listens only on UDP port `40000`.
