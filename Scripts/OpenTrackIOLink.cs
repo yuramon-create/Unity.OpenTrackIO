@@ -9,23 +9,22 @@ namespace OpenTrackIO
     [ExecuteInEditMode]
     public class OpenTrackIOLink : MonoBehaviour
     {
-        [Header("Listening on port 40000")]
+        [Header("Listening port")]
         [Tooltip("Run the server in edit mode")]
         public new bool runInEditMode = true;
+        [Tooltip("Receive OpenTrackIO packets on this UDP port")]
+        public int port = 40_000;
         [Tooltip("Apply the values received to the gameObject")]
         public bool apply = true;
-        public int id;
         OpenTrackIOServer server;
         Packet packet;
         public Packet lastPacket;
         void OnEnable()
         {
             if (!Application.isPlaying && !runInEditMode) return;
-            server = OpenTrackIOServer.Get(40_000);
+            server = OpenTrackIOServer.Get(port);
             server.received += (packet) =>
             {
-                if (packet.sourceNumber != id) return;
-
                 this.packet = packet;
             };
         }
@@ -39,20 +38,20 @@ namespace OpenTrackIO
             if (packet.transforms != null && packet.transforms.Length > 0)
             {
                 var transformData = packet.transforms[0];
-                // OpenTrackIO uses right-handed coordinates; Unity uses left-handed.
+                // exchange for Unity coordinate system (Y up, Z forward, X right)
                 transform.localPosition = new Vector3(
                     transformData.translation.x,
-                    transformData.translation.y,
-                    -transformData.translation.z
+                    transformData.translation.z,
+                    transformData.translation.y
                 );
 
+                // Convert pan, tilt, roll to Unity coordinate system (Y up, Z forward, X right)
                 var sourceRotation =
-                    Quaternion.AngleAxis(transformData.rotation.pan, Vector3.up) *
+                    Quaternion.AngleAxis(-transformData.rotation.pan, Vector3.up) *
                     Quaternion.AngleAxis(-transformData.rotation.tilt, Vector3.right) *
                     Quaternion.AngleAxis(-transformData.rotation.roll, Vector3.forward);
 
-                // Apply a 90-degree yaw offset to match the Unity camera orientation.
-                var convert = Quaternion.Euler(0f, 90f, 0f);
+                var convert = Quaternion.Euler(0f, 0f, 0f);
                 transform.localRotation = convert * sourceRotation;
             }
 
