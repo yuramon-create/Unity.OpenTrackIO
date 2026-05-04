@@ -196,27 +196,27 @@ namespace OpenTrackIO
             }
 
             var header = ParseHeader(data);
-            if (header == null)
+            string json;
+
+            if (header != null && header.identifier == "OTIO")
             {
-                throw new Exception("Failed to parse OpenTrackIO header.");
+                if (header.encoding != 0x01)
+                {
+                    throw new NotSupportedException($"OpenTrackIO encoding {header.encoding} is not supported.");
+                }
+
+                if (data.Length < 16 + header.payloadLength)
+                {
+                    throw new ArgumentException("OpenTrackIO packet is shorter than expected payload length.");
+                }
+
+                json = ExtractJsonPayload(data, header);
+            }
+            else
+            {
+                json = ExtractJsonPayload(data, null);
             }
 
-            if (header.identifier != "OTIO")
-            {
-                throw new Exception("OpenTrackIO packet does not begin with 'OTIO' identifier.");
-            }
-
-            if (header.encoding != 0x01)
-            {
-                throw new NotSupportedException($"OpenTrackIO encoding {header.encoding} is not supported.");
-            }
-
-            if (data.Length < 16 + header.payloadLength)
-            {
-                throw new ArgumentException("OpenTrackIO packet is shorter than expected payload length.");
-            }
-
-            string json = ExtractJsonPayload(data, header.payloadLength);
             if (string.IsNullOrEmpty(json))
             {
                 throw new Exception("Failed to extract JSON payload from OpenTrackIO packet.");
@@ -255,9 +255,24 @@ namespace OpenTrackIO
             return header;
         }
 
-        private static string ExtractJsonPayload(byte[] data, int payloadLength)
+        private static string ExtractJsonPayload(byte[] data, OpenTrackIOHeader header)
         {
-            return Encoding.UTF8.GetString(data, 16, payloadLength);
+            string json;
+            if (header != null && header.identifier == "OTIO")
+            {
+                json = Encoding.UTF8.GetString(data, 16, header.payloadLength);
+#if UNITY_EDITOR || DEBUG
+                Debug.Log($"OpenTrackIO header detected. Extracted JSON payload ({header.payloadLength} bytes): {json}");
+#endif
+            }
+            else
+            {
+                json = Encoding.UTF8.GetString(data);
+#if UNITY_EDITOR || DEBUG
+                Debug.Log($"No OpenTrackIO header detected. Treating full packet as JSON: {json}");
+#endif
+            }
+            return json;
         }
     }
 }
