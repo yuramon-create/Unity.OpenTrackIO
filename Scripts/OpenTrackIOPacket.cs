@@ -83,7 +83,7 @@ namespace OpenTrackIO
         [Serializable]
         public class Custom
         {
-            public LiveLinkMetaData[] liveLinkMetaData;
+            public MetaData[] MetaData;
             public int pot1;
             public bool button1;
         }
@@ -170,7 +170,7 @@ namespace OpenTrackIO
         }
 
         [Serializable]
-        public class LiveLinkMetaData
+        public class MetaData
         {
             public string key;
             public string value;
