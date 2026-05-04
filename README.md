@@ -13,6 +13,26 @@ Unity.OpenTrackIO is an experimental Unity plugin skeleton for receiving OpenTra
 - Parses the OpenTrackIO header and extracts fields such as `sourceNumber`, `transforms`, `lens`, `protocol`, `static`, and `custom`.
 - Maps received OpenTrackIO data into Unity objects and exposes a starting point for further integration.
 
+## File Responsibilities
+
+- `OpenTrackIOServer.cs`
+  - Creates and manages a UDP listener on port `40000`.
+  - Receives raw OpenTrackIO UDP packets.
+  - Hands packet payloads to `OpenTrackIOPacket.Decode`.
+  - Raises parsed packet events to the Unity scene.
+
+- `OpenTrackIOPacket.cs`
+  - Parses the OpenTrackIO packet header.
+  - Extracts JSON payload data from OTIO-formatted packets.
+  - Deserializes the full OpenTrackIO data structure into Unity-friendly classes.
+  - Exposes values such as `sourceNumber`, `transforms`, `lens`, `static`, `protocol`, and `custom`.
+
+- `OpenTrackIOLink.cs`
+  - Attaches to a Unity `Camera` GameObject.
+  - Subscribes to `OpenTrackIOServer` packet events.
+  - Maps received OpenTrackIO transform values to Unity object position and rotation.
+  - Calculates and applies camera parameters such as `fieldOfView` and `focusDistance`.
+
 ## Status
 
 - This plugin is intended as a starting template for using OpenTrackIO in Unity.
