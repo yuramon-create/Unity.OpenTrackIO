@@ -195,9 +195,9 @@ namespace OpenTrackIO
                 throw new ArgumentException("OpenTrackIO packet is empty.");
             }
 
-#if UNITY_EDITOR || DEBUG
-            Debug.Log($"Received raw data ({data.Length} bytes): {BitConverter.ToString(data)}");
-#endif
+// #if UNITY_EDITOR || DEBUG
+//             Debug.Log($"Received raw data ({data.Length} bytes): {BitConverter.ToString(data)}");
+// #endif
 
             var header = ParseHeader(data);
             string json;
@@ -272,17 +272,17 @@ namespace OpenTrackIO
             if (header != null && header.identifier == "OTrk")
             {
                 json = Encoding.UTF8.GetString(data, 16, header.payloadLength);
-#if UNITY_EDITOR || DEBUG
-                Debug.Log($"OpenTrackIO header detected. Identifier={header.identifier}, payload length={header.payloadLength}. Extracted JSON payload: {json}");
-#endif
+// #if UNITY_EDITOR || DEBUG
+//                 Debug.Log($"OpenTrackIO header detected. Identifier={header.identifier}, payload length={header.payloadLength}. Extracted JSON payload: {json}");
+// #endif
             }
             else
             {
                 json = Encoding.UTF8.GetString(data);
-#if UNITY_EDITOR || DEBUG
-                Debug.Log($"No OpenTrackIO header detected. Treating full packet as JSON-like payload. Header identifier: {header?.identifier ?? "<none>"}");
-                Debug.Log($"Raw payload prefix: {BitConverter.ToString(data, 0, Math.Min(data.Length, 32))}");
-#endif
+// #if UNITY_EDITOR || DEBUG
+//                 Debug.Log($"No OpenTrackIO header detected. Treating full packet as JSON-like payload. Header identifier: {header?.identifier ?? "<none>"}");
+//                 Debug.Log($"Raw payload prefix: {BitConverter.ToString(data, 0, Math.Min(data.Length, 32))}");
+// #endif
             }
             return json.Trim();
         }

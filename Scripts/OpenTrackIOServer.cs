@@ -15,9 +15,14 @@ namespace OpenTrackIO
         {
             if (!servers.TryGetValue(port, out var server))
             {
-                server = new OpenTrackIOServer();
+                var go = new GameObject($"OpenTrackIOServer_{port}");
+                server = go.AddComponent<OpenTrackIOServer>();
                 server.listenPort = port;
                 server.active = true;
+                if (Application.isPlaying)
+                {
+                    DontDestroyOnLoad(go);
+                }
                 Task.Run(server.Start);
                 servers.Add(port, server);
             }

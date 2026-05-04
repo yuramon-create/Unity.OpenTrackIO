@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -58,20 +59,48 @@ namespace OpenTrackIO
             var camera = GetComponent<Camera>();
             if (camera != null)
             {
-                // Apply zoom and focus values to the camera
-                if (packet.lens != null && packet.@static != null && packet.@static.camera != null && packet.@static.camera.activeSensorPhysicalDimensions != null)
+                camera.usePhysicalProperties = true;
+
+                if (packet.lens != null && packet.@static != null && packet.@static.camera != null)
                 {
-                    // Calculate FOV from sensor size and focal length (both in mm)
+                    var staticCamera = packet.@static.camera;
                     float focalLength_mm = packet.lens.pinholeFocalLength; // in mm
-                    float sensorHeight_mm = packet.@static.camera.activeSensorPhysicalDimensions.height; // in mm
-                    
-                    if (focalLength_mm > 0 && sensorHeight_mm > 0)
+                    float sensorWidth_mm = staticCamera.activeSensorPhysicalDimensions != null ? staticCamera.activeSensorPhysicalDimensions.width : 0f;
+                    float sensorHeight_mm = staticCamera.activeSensorPhysicalDimensions != null ? staticCamera.activeSensorPhysicalDimensions.height : 0f;
+
+                    if (sensorWidth_mm > 0f && sensorHeight_mm > 0f)
                     {
-                        // Vertical FOV in degrees: 2 * atan(sensorHeight / (2 * focalLength)) * (180 / PI)
+                        camera.sensorSize = new Vector2(sensorWidth_mm, sensorHeight_mm);
+                    }
+
+                    if (focalLength_mm > 0f)
+                    {
+                        camera.focalLength = focalLength_mm;
+                    }
+
+                    if (focalLength_mm > 0f && sensorHeight_mm > 0f)
+                    {
                         float verticalFOV = 2f * Mathf.Atan(sensorHeight_mm / (2f * focalLength_mm)) * Mathf.Rad2Deg;
                         camera.fieldOfView = verticalFOV;
                     }
+
+                    if (packet.lens.fStop > 0f)
+                    {
+                        TrySetCameraProperty(camera, "aperture", packet.lens.fStop);
+                    }
+
+                    if (staticCamera.isoSpeed > 0)
+                    {
+                        TrySetCameraProperty(camera, "iso", staticCamera.isoSpeed);
+                    }
+
+                    float shutterSpeed = GetShutterSpeed(staticCamera, staticCamera.captureFrameRate);
+                    if (shutterSpeed > 0f)
+                    {
+                        TrySetCameraProperty(camera, "shutterSpeed", shutterSpeed);
+                    }
                 }
+
                 if (packet.lens != null)
                 {
                     // focusDistance is in meters, Unity expects meters
@@ -100,6 +129,42 @@ namespace OpenTrackIO
 
         }
 
+        private static float GetShutterSpeed(Packet.Camera camera, Packet.Rational captureFrameRate)
+        {
+            if (camera == null || captureFrameRate == null || captureFrameRate.denom == 0) return 0f;
+
+            float fps = (float)captureFrameRate.num / captureFrameRate.denom;
+            if (fps <= 0f || camera.shutterAngle <= 0f) return 0f;
+
+            return (camera.shutterAngle / 360f) / fps;
+        }
+
+        private static void TrySetCameraProperty(Camera camera, string propertyName, object value)
+        {
+            var property = typeof(Camera).GetProperty(propertyName);
+            if (property == null || !property.CanWrite) return;
+
+            var targetType = property.PropertyType;
+            try
+            {
+                if (targetType == value.GetType())
+                {
+                    property.SetValue(camera, value);
+                }
+                else if (targetType == typeof(float))
+                {
+                    property.SetValue(camera, Convert.ToSingle(value));
+                }
+                else if (targetType == typeof(int))
+                {
+                    property.SetValue(camera, Convert.ToInt32(value));
+                }
+            }
+            catch
+            {
+                // Ignore property assignment failures for unsupported API versions.
+            }
+        }
     }
 
 }
